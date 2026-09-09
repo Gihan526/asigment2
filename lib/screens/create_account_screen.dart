@@ -5,20 +5,34 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import '../theme/app_colors.dart';
 import '../widgets/campus_mark.dart';
 import '../widgets/login_text_field.dart';
-import 'create_account_screen.dart';
 
-/// The welcome-back screen from the Campus Lost & Found Figma flow.
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+/// The registration screen for creating a new Foundly campus account.
+class CreateAccountScreen extends StatefulWidget {
+  const CreateAccountScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
   static const _maxFormWidth = 440.0;
 
   bool _hidePassword = true;
+  bool _hideConfirmPassword = true;
+
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +52,30 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: _maxFormWidth),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 12, 28, 36),
+                padding: const EdgeInsets.fromLTRB(28, 8, 28, 36),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
-                    const Center(child: CampusMark()),
-                    const SizedBox(height: 18),
+                    SizedBox(
+                      height: 80,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            child: _BackButton(
+                              onTap: () => Navigator.maybePop(context),
+                            ),
+                          ),
+                          const CampusMark(
+                            width: 90,
+                            height: 78,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     const Text(
                       'FOUNDLY',
                       textAlign: TextAlign.center,
@@ -56,78 +87,81 @@ class _LoginScreenState extends State<LoginScreen> {
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Welcome back',
+                      'Create account',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.primaryText,
-                        fontSize: 32,
+                        fontSize: 30,
                         fontWeight: FontWeight.w700,
-                        height: 44 / 32,
-                        letterSpacing: -.65,
+                        height: 38 / 30,
+                        letterSpacing: -.6,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Sign in to continue helping items find their way home.',
+                        'Join your campus community to report and recover lost items.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.secondaryText,
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          height: 21 / 15,
+                          height: 20 / 14,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    const _FieldLabel('Campus email'),
-                    const SizedBox(height: 8),
-                    const LoginTextField(
-                      hint: 'name@campus.edu',
-                      keyboardType: TextInputType.emailAddress,
-                    ),
                     const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const _FieldLabel('Password'),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.blue,
-                            minimumSize: const Size(0, 30),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Text(
-                            'Forgot password?',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              height: 18 / 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const _FieldLabel('Full name'),
                     const SizedBox(height: 6),
                     LoginTextField(
-                      hint: 'Enter your password',
+                      controller: _nameController,
+                      hint: 'Alex Morgan',
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 14),
+                    const _FieldLabel('Campus email'),
+                    const SizedBox(height: 6),
+                    LoginTextField(
+                      controller: _emailController,
+                      hint: 'name@campus.edu',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 14),
+                    const _FieldLabel('Password'),
+                    const SizedBox(height: 6),
+                    LoginTextField(
+                      controller: _passwordController,
+                      hint: 'Create a password',
                       obscureText: _hidePassword,
+                      textInputAction: TextInputAction.next,
                       suffix: _PasswordVisibilityButton(
                         hidden: _hidePassword,
                         onTap: () =>
                             setState(() => _hidePassword = !_hidePassword),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 14),
+                    const _FieldLabel('Confirm password'),
+                    const SizedBox(height: 6),
+                    LoginTextField(
+                      controller: _confirmPasswordController,
+                      hint: 'Confirm your password',
+                      obscureText: _hideConfirmPassword,
+                      textInputAction: TextInputAction.done,
+                      suffix: _PasswordVisibilityButton(
+                        hidden: _hideConfirmPassword,
+                        onTap: () => setState(
+                          () => _hideConfirmPassword = !_hideConfirmPassword,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(32),
@@ -141,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       child: SizedBox(
-                        height: 56,
+                        height: 54,
                         child: FilledButton(
                           onPressed: () {},
                           style: FilledButton.styleFrom(
@@ -153,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Log in',
+                            'Create account',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -163,13 +197,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Flexible(
                           child: Text(
-                            'New to Foundly?',
+                            'Already have an account?',
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -181,14 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(width: 8),
                         TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateAccountScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: () => Navigator.maybePop(context),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.blue,
                             minimumSize: const Size(0, 38),
@@ -201,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Create account',
+                            'Log in',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -220,6 +247,39 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+class _BackButton extends StatelessWidget {
+  const _BackButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Back',
+    child: Material(
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: const Color(0x260F1724),
+      shape: const CircleBorder(
+        side: BorderSide(color: AppColors.inputBorder),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(
+            TablerIcons.chevron_left,
+            size: 24,
+            color: AppColors.primaryText,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _PasswordVisibilityButton extends StatelessWidget {

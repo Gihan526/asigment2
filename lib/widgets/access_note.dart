@@ -9,25 +9,20 @@ class AccessNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     decoration: BoxDecoration(
       color: AppColors.accessCard,
       borderRadius: BorderRadius.circular(20),
     ),
-    child: const Stack(
+    child: const Row(
       children: [
-        Positioned(
-          left: 18,
-          top: 24,
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.blue,
-            child: Icon(TablerIcons.check, color: Colors.white, size: 21),
-          ),
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: AppColors.blue,
+          child: Icon(TablerIcons.check, color: Colors.white, size: 21),
         ),
-        Positioned(
-          left: 70,
-          top: 15,
-          right: 18,
+        SizedBox(width: 14),
+        Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +36,7 @@ class AccessNote extends StatelessWidget {
                   height: 19 / 14,
                 ),
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
                 'Your account keeps reports connected to real people.',
                 style: TextStyle(
