@@ -17,14 +17,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CampusMark), findsOneWidget);
-    expect(find.descendant(of: find.byType(CampusMark), matching: find.byType(Image)), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CampusMark),
+        matching: find.byType(Image),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Campus email'), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);
     expect(find.text('Create account'), findsOneWidget);
   });
 
-  testWidgets('navigates to create account screen and back', (WidgetTester tester) async {
+  testWidgets('navigates to create account screen and back', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const CampusLostFoundApp());
     await tester.pumpAndSettle();
 
@@ -37,6 +45,7 @@ void main() {
     expect(find.text('Full name'), findsOneWidget);
     expect(find.text('Confirm password'), findsOneWidget);
     expect(find.text('Already have an account?'), findsOneWidget);
+    expect(find.byTooltip('Dark mode'), findsOneWidget);
 
     // Scroll to and tap "Log in" to navigate back
     await tester.ensureVisible(find.text('Log in'));
@@ -45,5 +54,26 @@ void main() {
 
     // Verify back on login screen
     expect(find.text('Welcome back'), findsOneWidget);
+  });
+
+  testWidgets('toggles dark mode from the persistent auth control', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const CampusLostFoundApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      Theme.of(tester.element(find.text('Welcome back'))).brightness,
+      Brightness.light,
+    );
+
+    await tester.tap(find.byTooltip('Dark mode'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Light mode'), findsOneWidget);
+    expect(
+      Theme.of(tester.element(find.text('Welcome back'))).brightness,
+      Brightness.dark,
+    );
   });
 }

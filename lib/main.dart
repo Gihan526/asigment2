@@ -5,14 +5,62 @@ import 'theme/app_colors.dart';
 
 void main() => runApp(const CampusLostFoundApp());
 
-class CampusLostFoundApp extends StatelessWidget {
+class CampusLostFoundApp extends StatefulWidget {
   const CampusLostFoundApp({super.key});
+
+  @override
+  State<CampusLostFoundApp> createState() => _CampusLostFoundAppState();
+}
+
+class _CampusLostFoundAppState extends State<CampusLostFoundApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light
+          ? ThemeMode.dark
+          : ThemeMode.light;
+    });
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Foundly',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
+    themeMode: _themeMode,
+    theme: _buildTheme(Brightness.light),
+    darkTheme: _buildTheme(Brightness.dark),
+    home: LoginScreen(onToggleTheme: _toggleTheme),
+  );
+
+  ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final background = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+    final surface = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final primaryText = isDark
+        ? AppColors.darkPrimaryText
+        : AppColors.lightPrimaryText;
+    final secondaryText = isDark
+        ? AppColors.darkSecondaryText
+        : AppColors.lightSecondaryText;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final blue = isDark ? AppColors.darkBlue : AppColors.blue;
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.blue,
+      brightness: brightness,
+      primary: blue,
+      surface: surface,
+      onSurface: primaryText,
+      onSurfaceVariant: secondaryText,
+      outline: border,
+    );
+
+    return ThemeData(
       useMaterial3: true,
+      brightness: brightness,
       fontFamily: 'SF Pro',
       fontFamilyFallback: const [
         'SF Pro Display',
@@ -23,13 +71,12 @@ class CampusLostFoundApp extends StatelessWidget {
         'Inter',
       ],
       typography: Typography.material2021(platform: TargetPlatform.iOS),
-      scaffoldBackgroundColor: AppColors.pageBackground,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.blue,
-        surface: AppColors.pageBackground,
-      ),
+      scaffoldBackgroundColor: background,
+      colorScheme: colorScheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          backgroundColor: AppColors.yellow,
+          foregroundColor: AppColors.lightPrimaryText,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(32),
           ),
@@ -37,6 +84,8 @@ class CampusLostFoundApp extends StatelessWidget {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.yellow,
+          foregroundColor: AppColors.lightPrimaryText,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(32),
           ),
@@ -57,19 +106,18 @@ class CampusLostFoundApp extends StatelessWidget {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(32),
-        ),
+        filled: true,
+        fillColor: surface,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(32)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: const BorderSide(color: AppColors.inputBorder),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
+          borderSide: BorderSide(color: blue, width: 1.5),
         ),
       ),
-    ),
-    home: const LoginScreen(),
-  );
+    );
+  }
 }

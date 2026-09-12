@@ -5,11 +5,14 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import '../theme/app_colors.dart';
 import '../widgets/campus_mark.dart';
 import '../widgets/login_text_field.dart';
+import '../widgets/theme_toggle_button.dart';
 import 'create_account_screen.dart';
 
 /// The welcome-back screen from the Campus Lost & Found Figma flow.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, required this.onToggleTheme});
+
+  final VoidCallback onToggleTheme;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -22,199 +25,205 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: AppColors.pageBackground,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: theme.scaffoldBackgroundColor,
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.pageBackground,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: _maxFormWidth),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 12, 28, 36),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Center(child: CampusMark()),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'FOUNDLY',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.blue,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        height: 17 / 12,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Welcome back',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        height: 44 / 32,
-                        letterSpacing: -.65,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Sign in to continue helping items find their way home.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          height: 21 / 15,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const _FieldLabel('Campus email'),
-                    const SizedBox(height: 8),
-                    const LoginTextField(
-                      hint: 'name@campus.edu',
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+          child: Stack(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _maxFormWidth),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 12, 28, 36),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const _FieldLabel('Password'),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.blue,
-                            minimumSize: const Size(0, 30),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Text(
-                            'Forgot password?',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              height: 18 / 13,
-                            ),
+                        const SizedBox(height: 16),
+                        const Center(child: CampusMark()),
+                        const SizedBox(height: 18),
+                        Text(
+                          'FOUNDLY',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 17 / 12,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    LoginTextField(
-                      hint: 'Enter your password',
-                      obscureText: _hidePassword,
-                      suffix: _PasswordVisibilityButton(
-                        hidden: _hidePassword,
-                        onTap: () =>
-                            setState(() => _hidePassword = !_hidePassword),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x402563EB),
-                            blurRadius: 18,
-                            spreadRadius: -4,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: SizedBox(
-                        height: 56,
-                        child: FilledButton(
-                          onPressed: () {},
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.blue,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Text(
-                            'Log in',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              height: 22 / 16,
-                            ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Welcome back',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: colors.onSurface,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            height: 44 / 32,
+                            letterSpacing: -.65,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Flexible(
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'New to Foundly?',
-                            overflow: TextOverflow.ellipsis,
+                            'Sign in to continue helping items find their way home.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: AppColors.secondaryText,
-                              fontSize: 14,
+                              color: colors.onSurfaceVariant,
+                              fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              height: 19 / 14,
+                              height: 21 / 15,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateAccountScreen(),
+                        const SizedBox(height: 32),
+                        const _FieldLabel('Campus email'),
+                        const SizedBox(height: 8),
+                        const LoginTextField(
+                          hint: 'name@campus.edu',
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const _FieldLabel('Password'),
+                            TextButton(
+                              onPressed: () {},
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.primary,
+                                minimumSize: const Size(0, 30),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
                               ),
-                            );
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.blue,
-                            minimumSize: const Size(0, 38),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
+                              child: const Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  height: 18 / 13,
+                                ),
+                              ),
                             ),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        LoginTextField(
+                          hint: 'Enter your password',
+                          obscureText: _hidePassword,
+                          suffix: _PasswordVisibilityButton(
+                            hidden: _hidePassword,
+                            onTap: () =>
+                                setState(() => _hidePassword = !_hidePassword),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          height: 56,
+                          child: FilledButton(
+                            onPressed: () {},
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.yellow,
+                              foregroundColor: AppColors.lightPrimaryText,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                            ),
+                            child: const Text(
+                              'Log in',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                height: 22 / 16,
+                              ),
                             ),
                           ),
-                          child: const Text(
-                            'Create account',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              height: 19 / 14,
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'New to Foundly?',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colors.onSurfaceVariant,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  height: 19 / 14,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => CreateAccountScreen(
+                                      onToggleTheme: widget.onToggleTheme,
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.primary,
+                                minimumSize: const Size(0, 38),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                              ),
+                              child: const Text(
+                                'Create account',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  height: 19 / 14,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                top: 10,
+                right: 20,
+                child: ThemeToggleButton(onPressed: widget.onToggleTheme),
+              ),
+            ],
           ),
         ),
       ),
@@ -229,16 +238,19 @@ class _PasswordVisibilityButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    onPressed: onTap,
-    tooltip: hidden ? 'Show password' : 'Hide password',
-    padding: EdgeInsets.zero,
-    icon: Icon(
-      hidden ? TablerIcons.eye : TablerIcons.eye_off,
-      color: const Color(0xFF737373),
-      size: 23,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return IconButton(
+      onPressed: onTap,
+      tooltip: hidden ? 'Show password' : 'Hide password',
+      padding: EdgeInsets.zero,
+      icon: Icon(
+        hidden ? TablerIcons.eye : TablerIcons.eye_off,
+        color: colors.onSurfaceVariant,
+        size: 23,
+      ),
+    );
+  }
 }
 
 class _FieldLabel extends StatelessWidget {
@@ -249,8 +261,8 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(
-      color: AppColors.primaryText,
+    style: TextStyle(
+      color: Theme.of(context).colorScheme.onSurface,
       fontSize: 13,
       fontWeight: FontWeight.w600,
       height: 18 / 13,
