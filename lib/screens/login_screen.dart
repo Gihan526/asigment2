@@ -9,6 +9,7 @@ import '../widgets/campus_mark.dart';
 import '../widgets/login_text_field.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'create_account_screen.dart';
+import 'home_screen.dart';
 
 /// The welcome-back screen from the Campus Lost & Found Figma flow.
 class LoginScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    // Validate empty inputs
     if (email.isEmpty || password.isEmpty) {
       _showMessage('Please enter your email and password.');
       return;
@@ -47,12 +49,46 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await AuthService().login(email, password);
-      if (mounted) _showMessage('Logged in successfully.');
+      // Authenticate with Firebase Auth
+      await AuthService().login(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      // Navigate to HomeScreen on successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(onToggleTheme: widget.onToggleTheme),
+        ),
+      );
     } on FirebaseAuthException catch (error) {
-      if (mounted) _showMessage(error.message ?? 'Could not log in.');
+      if (mounted) _showMessage(_getFriendlyErrorMessage(error.code, error.message));
+    } catch (error) {
+      if (mounted) _showMessage('An unexpected error occurred: $error');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _getFriendlyErrorMessage(String code, String? defaultMessage) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No user found with this email.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return defaultMessage ?? 'Could not log in. Please try again.';
     }
   }
 

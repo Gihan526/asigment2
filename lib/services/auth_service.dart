@@ -1,21 +1,80 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
+/// Service class to handle Firebase Authentication and Realtime Database operations.
+/// Designed to be beginner-friendly, clean, and easy to understand.
 class AuthService {
+  // Instance of Firebase Authentication
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> login(String email, String password) async {
-    await _auth.signInWithEmailAndPassword(
+  // Instance of Firebase Realtime Database
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
+
+  /// Get the currently logged-in user (returns null if not logged in)
+  User? get currentUser => _auth.currentUser;
+
+  /// Register a new user using Email & Password, and store user details in Realtime Database.
+  /// 
+  /// Step 1: Creates the user in Firebase Auth.
+  /// Step 2: Sets their display name.
+  /// Step 3: Saves user profile (uid, name, email, createdAt) to Firebase Realtime Database at /users/{uid}.
+  /// Step 4: Signs out so they can log in via the login screen.
+  Future<UserCredential> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    // Step 1: Create user in Firebase Authentication
+    final userCredential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final user = userCredential.user;
+    if (user != null) {
+      // Step 2: Set display name in Firebase Auth
+      await user.updateDisplayName(name.trim());
+
+      // Step 3: Store user details in Firebase Realtime Database under 'users/<uid>'
+      final userRef = _database.ref('users/${user.uid}');
+      await userRef.set({
+        'uid': user.uid,
+        'name': name.trim(),
+        'email': email.trim(),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+    }
+
+    // Step 4: Sign out after registration so the user can log in with their credentials
+    await _auth.signOut();
+
+    return userCredential;
+  }
+
+  /// Log in an existing user with their Email and Password.
+  Future<UserCredential> login({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
   }
 
-  Future<void> register(String name, String email, String password) async {
-    final result = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    await result.user?.updateDisplayName(name.trim());
+  /// Retrieve user profile data from Firebase Realtime Database.
+  Future<Map<String, dynamic>?> getUserProfile(String uid) async {
+    final snapshot = await _database.ref('users/$uid').get();
+    if (snapshot.exists && snapshot.value != null) {
+      final data = Map<dynamic, dynamic>.from(snapshot.value as Map);
+      return data.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return null;
+  }
+
+  /// Sign out the current user.
+  Future<void> logout() async {
     await _auth.signOut();
   }
 }
+

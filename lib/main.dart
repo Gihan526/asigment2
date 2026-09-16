@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
+import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_colors.dart';
 
@@ -18,7 +20,9 @@ Future<void> main() async {
 }
 
 class CampusLostFoundApp extends StatefulWidget {
-  const CampusLostFoundApp({super.key});
+  const CampusLostFoundApp({super.key, this.initialUser});
+
+  final User? initialUser;
 
   @override
   State<CampusLostFoundApp> createState() => _CampusLostFoundAppState();
@@ -35,6 +39,14 @@ class _CampusLostFoundAppState extends State<CampusLostFoundApp> {
     });
   }
 
+  bool get _isLoggedIn {
+    try {
+      return (widget.initialUser ?? FirebaseAuth.instance.currentUser) != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Foundly',
@@ -42,7 +54,10 @@ class _CampusLostFoundAppState extends State<CampusLostFoundApp> {
     themeMode: _themeMode,
     theme: _buildTheme(Brightness.light),
     darkTheme: _buildTheme(Brightness.dark),
-    home: LoginScreen(onToggleTheme: _toggleTheme),
+    // If the user is already authenticated, take them directly to HomeScreen
+    home: _isLoggedIn
+        ? HomeScreen(onToggleTheme: _toggleTheme)
+        : LoginScreen(onToggleTheme: _toggleTheme),
   );
 
   ThemeData _buildTheme(Brightness brightness) {

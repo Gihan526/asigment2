@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://mobileassigment2-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mobileassigment2.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAdg4O23aDCqHukqDgUHMqYl5zAnwVk_9Q',
     appId: '1:845996953960:ios:e8ea9dcc84462429c306dd',

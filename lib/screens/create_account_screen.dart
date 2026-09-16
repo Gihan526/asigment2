@@ -45,25 +45,52 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
+    // Validate empty fields
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       _showMessage('Please fill in every field.');
       return;
     }
+    // Validate password confirmation
     if (password != _confirmPasswordController.text) {
       _showMessage('Passwords do not match.');
+      return;
+    }
+    // Firebase Auth requires at least 6 characters for passwords
+    if (password.length < 6) {
+      _showMessage('Password must be at least 6 characters.');
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      await AuthService().register(name, email, password);
+      // Create user in Firebase Auth and save user info in Realtime Database
+      await AuthService().register(
+        name: name,
+        email: email,
+        password: password,
+      );
       if (!mounted) return;
-      _showMessage('Account created successfully.');
+      _showMessage('Account created successfully! Please log in.');
       Navigator.pop(context);
     } on FirebaseAuthException catch (error) {
-      if (mounted) _showMessage(error.message ?? 'Could not create account.');
+      if (mounted) _showMessage(_getFriendlyErrorMessage(error.code, error.message));
+    } catch (error) {
+      if (mounted) _showMessage('Error creating account: $error');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _getFriendlyErrorMessage(String code, String? defaultMessage) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'This email is already registered. Please log in.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'weak-password':
+        return 'Password is too weak. Please use at least 6 characters.';
+      default:
+        return defaultMessage ?? 'Could not create account. Please try again.';
     }
   }
 
