@@ -1,9 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'screens/login_screen.dart';
 import 'theme/app_colors.dart';
 
-void main() => runApp(const CampusLostFoundApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const CampusLostFoundApp());
+}
 
 class CampusLostFoundApp extends StatefulWidget {
   const CampusLostFoundApp({super.key});

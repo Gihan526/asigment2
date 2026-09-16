@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
 import '../widgets/campus_mark.dart';
 import '../widgets/login_text_field.dart';
 import '../widgets/theme_toggle_button.dart';
@@ -22,6 +24,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   bool _hidePassword = true;
   bool _hideConfirmPassword = true;
+  bool _isLoading = false;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -35,6 +38,39 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _register() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      _showMessage('Please fill in every field.');
+      return;
+    }
+    if (password != _confirmPasswordController.text) {
+      _showMessage('Passwords do not match.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await AuthService().register(name, email, password);
+      if (!mounted) return;
+      _showMessage('Account created successfully.');
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (error) {
+      if (mounted) _showMessage(error.message ?? 'Could not create account.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -67,20 +103,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           height: 80,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: _BackButton(
-                                  onTap: () => Navigator.maybePop(context),
-                                ),
-                              ),
-                              const CampusMark(width: 90, height: 78),
-                            ],
+                          child: Center(
+                            child: CampusMark(width: 90, height: 78),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -174,7 +200,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         SizedBox(
                           height: 54,
                           child: FilledButton(
-                            onPressed: () {},
+                            onPressed: _isLoading ? null : _register,
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.yellow,
                               foregroundColor: AppColors.lightPrimaryText,
@@ -183,14 +209,22 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 borderRadius: BorderRadius.circular(32),
                               ),
                             ),
-                            child: const Text(
-                              'Create account',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                height: 22 / 16,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Create account',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      height: 22 / 16,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -244,6 +278,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 right: 20,
                 child: ThemeToggleButton(onPressed: widget.onToggleTheme),
               ),
+              Positioned(
+                top: 10,
+                left: 20,
+                child: _BackButton(onTap: () => Navigator.maybePop(context)),
+              ),
             ],
           ),
         ),
@@ -259,21 +298,22 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Semantics(
       button: true,
       label: 'Back',
       child: Material(
-        color: colors.surface,
+        color: isDark ? theme.scaffoldBackgroundColor : colors.surface,
         elevation: 2,
         shadowColor: Colors.black.withValues(alpha: .15),
         shape: CircleBorder(side: BorderSide(color: colors.outline)),
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 44,
-            height: 44,
+          child: SizedBox.square(
+            dimension: authControlSize,
             child: Icon(
               TablerIcons.chevron_left,
               size: 24,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
+const authControlSize = 48.0;
+
 /// A persistent auth-screen control for switching between light and dark mode.
 class ThemeToggleButton extends StatelessWidget {
   const ThemeToggleButton({super.key, required this.onPressed});
@@ -22,20 +24,23 @@ class ThemeToggleButton extends StatelessWidget {
         shadowColor: Colors.black.withValues(alpha: isDark ? .32 : .12),
         shape: CircleBorder(side: BorderSide(color: colors.outline)),
         clipBehavior: Clip.antiAlias,
-        child: IconButton(
-          onPressed: onPressed,
-          tooltip: isDark ? 'Light mode' : 'Dark mode',
-          iconSize: 21,
-          color: colors.onSurface,
-          icon: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            transitionBuilder: (child, animation) => RotationTransition(
-              turns: Tween<double>(begin: .85, end: 1).animate(animation),
-              child: FadeTransition(opacity: animation, child: child),
-            ),
-            child: Icon(
-              isDark ? TablerIcons.sun : TablerIcons.moon,
-              key: ValueKey(isDark),
+        child: SizedBox.square(
+          dimension: authControlSize,
+          child: IconButton(
+            onPressed: onPressed,
+            tooltip: isDark ? 'Light mode' : 'Dark mode',
+            iconSize: 21,
+            color: colors.onSurface,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) => RotationTransition(
+                turns: Tween<double>(begin: .85, end: 1).animate(animation),
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: Icon(
+                isDark ? TablerIcons.sun : TablerIcons.moon,
+                key: ValueKey(isDark),
+              ),
             ),
           ),
         ),

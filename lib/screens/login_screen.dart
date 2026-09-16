@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
 import '../widgets/campus_mark.dart';
 import '../widgets/login_text_field.dart';
 import '../widgets/theme_toggle_button.dart';
@@ -22,6 +24,43 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _maxFormWidth = 440.0;
 
   bool _hidePassword = true;
+  bool _isLoading = false;
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage('Please enter your email and password.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await AuthService().login(email, password);
+      if (mounted) _showMessage('Logged in successfully.');
+    } on FirebaseAuthException catch (error) {
+      if (mounted) _showMessage(error.message ?? 'Could not log in.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,9 +135,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 32),
                         const _FieldLabel('Campus email'),
                         const SizedBox(height: 8),
-                        const LoginTextField(
+                        LoginTextField(
+                          controller: _emailController,
                           hint: 'name@campus.edu',
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
                         Row(
@@ -132,8 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 6),
                         LoginTextField(
+                          controller: _passwordController,
                           hint: 'Enter your password',
                           obscureText: _hidePassword,
+                          textInputAction: TextInputAction.done,
                           suffix: _PasswordVisibilityButton(
                             hidden: _hidePassword,
                             onTap: () =>
@@ -144,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 56,
                           child: FilledButton(
-                            onPressed: () {},
+                            onPressed: _isLoading ? null : _login,
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.yellow,
                               foregroundColor: AppColors.lightPrimaryText,
@@ -153,14 +196,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(32),
                               ),
                             ),
-                            child: const Text(
-                              'Log in',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                height: 22 / 16,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Log in',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      height: 22 / 16,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 18),
