@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Foundly requires camera access so you can photograph found items to help owners identify them.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Foundly requires photo library access so you can select and upload photos of found items.</string>
 </dict>
 </plist>

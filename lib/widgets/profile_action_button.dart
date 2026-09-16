@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 
-const authControlSize = 48.0;
-
-/// A persistent auth-screen control for switching between light and dark mode.
-class ThemeToggleButton extends StatelessWidget {
-  const ThemeToggleButton({
+/// A circular header button that matches the exact styling, geometry,
+/// border, and elevation of [ThemeToggleButton] for visual harmony in app bars.
+class ProfileActionButton extends StatelessWidget {
+  const ProfileActionButton({
     super.key,
     required this.onPressed,
-    this.size = authControlSize,
+    this.size = 42.0,
+    this.name = '',
   });
 
   final VoidCallback onPressed;
   final double size;
+  final String name;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class ThemeToggleButton extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+      label: 'Open user profile',
       child: Material(
         color: isDark ? theme.scaffoldBackgroundColor : colors.surface,
         elevation: 2,
@@ -34,20 +35,10 @@ class ThemeToggleButton extends StatelessWidget {
           child: IconButton(
             padding: EdgeInsets.zero,
             onPressed: onPressed,
-            tooltip: isDark ? 'Light mode' : 'Dark mode',
-            iconSize: size <= 44 ? 20 : 21,
+            tooltip: 'My Profile',
+            iconSize: 20,
             color: colors.onSurface,
-            icon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              transitionBuilder: (child, animation) => RotationTransition(
-                turns: Tween<double>(begin: .85, end: 1).animate(animation),
-                child: FadeTransition(opacity: animation, child: child),
-              ),
-              child: Icon(
-                isDark ? TablerIcons.sun : TablerIcons.moon,
-                key: ValueKey(isDark),
-              ),
-            ),
+            icon: const Icon(TablerIcons.user),
           ),
         ),
       ),
