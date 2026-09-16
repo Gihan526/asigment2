@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "845996953960",
+    "firebase_url": "https://mobileassigment2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mobileassigment2",
+    "storage_bucket": "mobileassigment2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845996953960:android:6be72ae4ef72d843c306dd",
+        "android_client_info": {
+          "package_name": "com.example.asigment2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6voUUykqr0yFvxkeXoY3tHFV99h-fnqk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
