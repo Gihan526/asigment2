@@ -20,7 +20,7 @@ class PostItemScreen extends StatefulWidget {
 
 class _PostItemScreenState extends State<PostItemScreen> {
   final _formKey = GlobalKey<FormState>();
-  final ItemService _itemService = ItemService();
+  late final ItemService _itemService = ItemService();
   final ImagePicker _picker = ImagePicker();
 
   late final TextEditingController _titleController;
@@ -41,7 +41,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
     final item = widget.itemToEdit;
     _titleController = TextEditingController(text: item?.title ?? '');
     _locationController = TextEditingController(text: item?.location ?? '');
-    _descriptionController = TextEditingController(text: item?.description ?? '');
+    _descriptionController = TextEditingController(
+      text: item?.description ?? '',
+    );
     _contactController = TextEditingController(text: item?.contactInfo ?? '');
   }
 
@@ -149,7 +151,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
     setState(() {
       _isLoading = true;
       _statusMessage = _isEditing
-          ? (_selectedImage != null ? 'Uploading new photo...' : 'Updating details...')
+          ? (_selectedImage != null
+                ? 'Uploading new photo...'
+                : 'Updating details...')
           : 'Uploading photo to Firebase Storage...';
     });
 
@@ -246,8 +250,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
                   controller: _titleController,
                   enabled: !_isLoading,
                   textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    hintText: 'e.g. Earbud, Blue Backpack, Scientific Calculator',
+                    hintText: 'e.g. Blue backpack',
                     prefixIcon: const Icon(TablerIcons.tag, size: 20),
                     fillColor: colors.surface,
                   ),
@@ -274,8 +279,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
                   controller: _locationController,
                   enabled: !_isLoading,
                   textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    hintText: 'e.g. Lecture Room 5, Library 2nd floor, Cafeteria',
+                    hintText: 'e.g. Library, 2nd floor',
                     prefixIcon: const Icon(TablerIcons.map_pin, size: 20),
                     fillColor: colors.surface,
                   ),
@@ -304,7 +310,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
                   maxLines: 3,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    hintText: 'Color, condition, specific brand or markings...',
+                    hintText: 'Color, brand, or markings',
                     prefixIcon: const Padding(
                       padding: EdgeInsets.only(bottom: 40),
                       child: Icon(TablerIcons.notes, size: 20),
@@ -327,8 +333,11 @@ class _PostItemScreenState extends State<PostItemScreen> {
                 TextFormField(
                   controller: _contactController,
                   enabled: !_isLoading,
+                  minLines: 1,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    hintText: 'e.g. Handed to Main Security Desk, or email me',
+                    hintText: 'e.g. Main security desk',
                     prefixIcon: const Icon(TablerIcons.info_circle, size: 20),
                     fillColor: colors.surface,
                   ),
@@ -346,12 +355,15 @@ class _PostItemScreenState extends State<PostItemScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        _statusMessage!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: colors.onSurfaceVariant,
+                      Flexible(
+                        child: Text(
+                          _statusMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -396,7 +408,8 @@ class _PostItemScreenState extends State<PostItemScreen> {
   /// Photo selection and preview container
   Widget _buildPhotoPicker(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final hasExistingImage = _isEditing && widget.itemToEdit!.imageUrl.isNotEmpty;
+    final hasExistingImage =
+        _isEditing && widget.itemToEdit!.imageUrl.isNotEmpty;
     final hasNewImage = _selectedImageBytes != null;
 
     return GestureDetector(
@@ -407,7 +420,9 @@ class _PostItemScreenState extends State<PostItemScreen> {
           color: colors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: (hasNewImage || hasExistingImage) ? colors.outline : colors.primary,
+            color: (hasNewImage || hasExistingImage)
+                ? colors.outline
+                : colors.primary,
             width: (hasNewImage || hasExistingImage) ? 1.0 : 1.5,
             strokeAlign: BorderSide.strokeAlignInside,
           ),
@@ -437,7 +452,11 @@ class _PostItemScreenState extends State<PostItemScreen> {
                   return const Center(child: CircularProgressIndicator());
                 },
                 errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(TablerIcons.photo_off, size: 40, color: Colors.grey),
+                  child: Icon(
+                    TablerIcons.photo_off,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
                 ),
               )
             // Empty placeholder prompting user to upload
@@ -460,20 +479,28 @@ class _PostItemScreenState extends State<PostItemScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      'Upload Picture of the Item',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: colors.onSurface,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Upload Picture of the Item',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: colors.onSurface,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Tap to take photo or pick from gallery',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.onSurfaceVariant,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Tap to take photo or pick from gallery',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
@@ -486,7 +513,10 @@ class _PostItemScreenState extends State<PostItemScreen> {
                 bottom: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(20),

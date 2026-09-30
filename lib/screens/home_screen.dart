@@ -297,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
           foregroundColor: AppColors.lightPrimaryText,
           icon: const Icon(TablerIcons.plus, size: 20),
           label: const Text(
-            'Report Found Item',
+            'Post Found Item',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
         ),
@@ -448,25 +448,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 _searchQuery.isNotEmpty
                                     ? 'Try checking for typos or searching by room name'
-                                    : 'Did you find something on campus? Tap below to report it and help the owner!',
+                                    : 'Found something on campus? Post it to help the owner.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: colors.onSurfaceVariant,
                                 ),
                               ),
-                              if (_searchQuery.isEmpty && _currentFilter != ItemFilter.myPosts) ...[
-                                const SizedBox(height: 20),
-                                FilledButton.icon(
-                                  onPressed: _openPostItemScreen,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.yellow,
-                                    foregroundColor: AppColors.lightPrimaryText,
-                                  ),
-                                  icon: const Icon(TablerIcons.camera, size: 18),
-                                  label: const Text('Post Found Item'),
-                                ),
-                              ],
                             ],
                           ),
                         ),
