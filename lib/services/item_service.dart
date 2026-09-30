@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,13 +8,14 @@ import '../models/lost_item.dart';
 
 /// Service handling all CRUD operations for lost/found items:
 /// - Firebase Storage for uploading and removing item photos.
-/// - Firebase Realtime Database for saving, listening to, updating, and deleting item records.
+/// - Cloud Firestore for saving, listening to, updating, and deleting item records.
 class ItemService {
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
+  final FirebaseFirestore _database = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  DatabaseReference get _itemsRef => _database.ref('items');
+  CollectionReference<Map<String, dynamic>> get _itemsRef =>
+      _database.collection('items');
 
   /// Upload an image to Firebase Storage and return the download URL and storage path.
   Future<({String imageUrl, String storagePath})> _uploadImage({
@@ -48,6 +49,27 @@ class ItemService {
     }
   }
 
+  void _validateDetails(
+    String title,
+    String location,
+    String description,
+    String contactInfo,
+  ) {
+    if (title.trim().isEmpty ||
+        title.trim().length > 200 ||
+        location.trim().isEmpty ||
+        location.trim().length > 200) {
+      throw ArgumentError(
+        'Title and location must contain 1 to 200 characters.',
+      );
+    }
+    if (description.trim().length > 5000 || contactInfo.trim().length > 2000) {
+      throw ArgumentError(
+        'Details must be at most 5000 characters and contact instructions at most 2000.',
+      );
+    }
+  }
+
   /// CREATE: Post a newly found item with picture, place, title, and contact details.
   Future<LostItem> createItem({
     required String title,
@@ -61,12 +83,11 @@ class ItemService {
       throw Exception('You must be logged in to post an item.');
     }
 
-    // Generate a unique ID from Realtime Database
-    final newRef = _itemsRef.push();
-    final itemId = newRef.key;
-    if (itemId == null) {
-      throw Exception('Could not generate unique item ID from database.');
-    }
+    _validateDetails(title, location, description, contactInfo);
+
+    // Allocate the document ID before uploading its photo.
+    final newRef = _itemsRef.doc();
+    final itemId = newRef.id;
 
     // 1. Upload photo to Firebase Storage
     final uploadResult = await _uploadImage(
@@ -90,36 +111,30 @@ class ItemService {
       isClaimed: false,
     );
 
-    // 3. Save JSON in Firebase Realtime Database at /items/{itemId}
-    await newRef.set(newItem.toMap());
+    // 3. Save JSON in Cloud Firestore at /items/{itemId}
+    try {
+      await newRef.set({
+        ...newItem.toMap(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      await _deleteStorageFile(uploadResult.storagePath);
+      rethrow;
+    }
 
     return newItem;
   }
 
-  /// READ: Real-time stream of all items from Realtime Database, newest first.
+  /// READ: Real-time stream of all items from Firestore, newest first.
   Stream<List<LostItem>> getItemsStream() {
-    return _itemsRef.onValue.map((event) {
-      final snapshotValue = event.snapshot.value;
-      if (snapshotValue == null) return <LostItem>[];
-
-      try {
-        final dataMap = Map<dynamic, dynamic>.from(snapshotValue as Map);
-        final items = <LostItem>[];
-
-        dataMap.forEach((key, value) {
-          if (value is Map) {
-            items.add(LostItem.fromMap(key.toString(), value));
-          }
-        });
-
-        // Sort descending by creation timestamp (newest items first)
-        items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return items;
-      } catch (e) {
-        debugPrint('Error parsing items stream: $e');
-        return <LostItem>[];
-      }
-    });
+    return _itemsRef
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => LostItem.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   /// UPDATE: Modify details of an existing item, with optional new photo upload.
@@ -131,6 +146,7 @@ class ItemService {
     required String contactInfo,
     XFile? newImageFile,
   }) async {
+    _validateDetails(title, location, description, contactInfo);
     String imageUrl = originalItem.imageUrl;
     String storagePath = originalItem.storagePath;
 
@@ -140,9 +156,6 @@ class ItemService {
         imageFile: newImageFile,
         itemId: originalItem.id,
       );
-
-      // Delete old photo in background
-      await _deleteStorageFile(originalItem.storagePath);
 
       imageUrl = uploadResult.imageUrl;
       storagePath = uploadResult.storagePath;
@@ -157,7 +170,17 @@ class ItemService {
       'storagePath': storagePath,
     };
 
-    await _itemsRef.child(originalItem.id).update(updatedData);
+    try {
+      await _itemsRef.doc(originalItem.id).update(updatedData);
+    } catch (_) {
+      if (newImageFile != null) await _deleteStorageFile(storagePath);
+      rethrow;
+    }
+
+    // Keep the previous photo until Firestore accepts the replacement.
+    if (newImageFile != null) {
+      await _deleteStorageFile(originalItem.storagePath);
+    }
   }
 
   /// UPDATE: Toggle claimed / returned status
@@ -165,15 +188,13 @@ class ItemService {
     required String itemId,
     required bool isClaimed,
   }) async {
-    await _itemsRef.child(itemId).update({'isClaimed': !isClaimed});
+    await _itemsRef.doc(itemId).update({'isClaimed': !isClaimed});
   }
 
-  /// DELETE: Delete item record from Realtime Database and photo from Firebase Storage.
+  /// DELETE: Delete item record from Firestore and photo from Firebase Storage.
   Future<void> deleteItem(LostItem item) async {
-    // 1. Delete image file from Firebase Storage
+    // Delete the document first so a denied write cannot remove its photo.
+    await _itemsRef.doc(item.id).delete();
     await _deleteStorageFile(item.storagePath);
-
-    // 2. Remove record from Firebase Realtime Database
-    await _itemsRef.child(item.id).remove();
   }
 }

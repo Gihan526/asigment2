@@ -1,9 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:asigment2/models/lost_item.dart';
 
 void main() {
   group('LostItem Model Tests', () {
-    test('serializes to Map correctly for Firebase Realtime Database', () {
+    test('serializes to Map correctly for Cloud Firestore', () {
       final item = LostItem(
         id: 'item_123',
         title: 'Earbud',
@@ -26,7 +27,10 @@ void main() {
       expect(map['location'], 'Lecture Room 5');
       expect(map['description'], 'Black Sony earbud left on desk 4');
       expect(map['contactInfo'], 'Left with Security Desk');
-      expect(map['imageUrl'], 'https://firebasestorage.googleapis.com/test.jpg');
+      expect(
+        map['imageUrl'],
+        'https://firebasestorage.googleapis.com/test.jpg',
+      );
       expect(map['storagePath'], 'lost_items/item_123.jpg');
       expect(map['userId'], 'user_456');
       expect(map['userName'], 'Gihan');
@@ -35,7 +39,7 @@ void main() {
       expect(map['isClaimed'], false);
     });
 
-    test('deserializes from Realtime Database Map correctly', () {
+    test('deserializes from Firestore Map correctly', () {
       final map = {
         'title': 'Earbud',
         'location': 'Lecture Room 5',
@@ -64,6 +68,18 @@ void main() {
       expect(item.userEmail, 'jane@campus.edu');
       expect(item.createdAt, 1726486000000);
       expect(item.isClaimed, true);
+    });
+
+    test('reads Firestore timestamps and keeps legacy millisecond dates', () {
+      final date = DateTime.utc(2026, 9, 30, 12);
+      for (final value in [
+        Timestamp.fromDate(date),
+        date.millisecondsSinceEpoch,
+      ]) {
+        final item = LostItem.fromMap('preserved-id', {'createdAt': value});
+        expect(item.id, 'preserved-id');
+        expect(item.createdAt, date.millisecondsSinceEpoch);
+      }
     });
 
     test('copyWith updates specified fields only', () {

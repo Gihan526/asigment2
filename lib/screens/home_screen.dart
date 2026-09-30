@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Load current user profile from Firebase Realtime Database
+  /// Load current user profile from Cloud Firestore
   Future<void> _loadUserProfile() async {
     final currentUser = _authService.currentUser;
     if (currentUser == null) {

@@ -63,7 +63,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // Create user in Firebase Auth and save user info in Realtime Database
+      // Create user in Firebase Auth and save user info in Firestore
       await AuthService().register(
         name: name,
         email: email,

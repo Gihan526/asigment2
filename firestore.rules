@@ -1,0 +1,85 @@
+rules_version = '2';
+// Prototype rules for the existing Foundly app.
+// users/{uid}: uid (string <=128, immutable), name (string 1..200),
+// email (string 1..320), createdAt (timestamp, immutable). Private profiles.
+// items/{id}: id/userId (strings <=128, immutable); title/location (1..200);
+// description (0..5000); contactInfo (0..2000); imageUrl (HTTPS, <=2048);
+// storagePath (lost_items/{id}_{milliseconds}.jpg, <=300);
+// userName (1..200)/userEmail (email <=320), immutable poster identity;
+// isClaimed (boolean, reversible); createdAt (timestamp, immutable).
+// All fields are required. Pickup instructions and poster details on items
+// are shared with signed-in students, matching the app's existing detail view.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function validString(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+    function validEmail(value) {
+      return validString(value, 3, 320) && value.matches('[^@ ]+@[^@ ]+[.][^@ ]+');
+    }
+    function uidUnchanged(uid) {
+      return uid == request.auth.uid;
+    }
+    function uidNotModified(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+    function isValidUser(data, uid) {
+      let fields = ['uid', 'name', 'email', 'createdAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && validString(data.uid, 1, 128) && data.uid == uid
+        && validString(data.name, 1, 200) && validEmail(data.email)
+        && data.createdAt is timestamp;
+    }
+    function isValidItem(data, id) {
+      let fields = ['id', 'title', 'location', 'description', 'contactInfo',
+        'imageUrl', 'storagePath', 'userId', 'userName', 'userEmail',
+        'isClaimed', 'createdAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && validString(data.id, 1, 128) && data.id == id
+        && data.id.matches('[A-Za-z0-9_-]+')
+        && validString(data.userId, 1, 128)
+        && validString(data.title, 1, 200) && validString(data.location, 1, 200)
+        && validString(data.description, 0, 5000)
+        && validString(data.contactInfo, 0, 2000)
+        && validString(data.imageUrl, 1, 2048) && data.imageUrl.matches('https://.+')
+        && validString(data.storagePath, 1, 300)
+        && data.storagePath.matches('lost_items/' + id + '_[0-9]+[.]jpg')
+        && validString(data.userName, 1, 200) && validEmail(data.userEmail)
+        && data.isClaimed is bool && data.createdAt is timestamp;
+    }
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUser(request.resource.data, uid)
+        && uidUnchanged(request.resource.data.uid)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time;
+      allow update: if isOwner(uid) && isValidUser(request.resource.data, uid)
+        && uidNotModified('uid')
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+    }
+    match /items/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidItem(request.resource.data, id)
+        && uidUnchanged(request.resource.data.userId)
+        && request.resource.data.userEmail == request.auth.token.email
+        && request.resource.data.isClaimed == false
+        && request.resource.data.createdAt == request.time;
+      allow update: if isOwner(resource.data.userId)
+        && isValidItem(request.resource.data, id) && uidNotModified('userId')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'location', 'description', 'contactInfo',
+          'imageUrl', 'storagePath', 'isClaimed'
+        ]);
+      allow delete: if isOwner(resource.data.userId);
+    }
+    // Documents and subcollections without an explicit match are denied.
+  }
+}

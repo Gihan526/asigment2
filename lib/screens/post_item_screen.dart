@@ -133,7 +133,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
     );
   }
 
-  /// Submit the post: upload photo to Firebase Storage and save to Realtime Database
+  /// Submit the post: upload photo to Firebase Storage and save to Firestore
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -175,7 +175,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
           Navigator.pop(context, true);
         }
       } else {
-        setState(() => _statusMessage = 'Saving to Realtime Database...');
+        setState(() => _statusMessage = 'Saving your post...');
         await _itemService.createItem(
           title: _titleController.text,
           location: _locationController.text,
