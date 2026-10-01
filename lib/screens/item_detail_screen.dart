@@ -67,14 +67,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  /// Delete the item post and its photo from Firebase
+  /// Delete the item post from Firestore.
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete this post?'),
         content: const Text(
-          'This will permanently remove the item details and delete the uploaded photo from Firebase Storage.',
+          'This will permanently remove this post from Foundly.',
         ),
         actions: [
           TextButton(

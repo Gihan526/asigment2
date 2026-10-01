@@ -4,7 +4,7 @@ rules_version = '2';
 // email (string 1..320), createdAt (timestamp, immutable). Private profiles.
 // items/{id}: id/userId (strings <=128, immutable); title/location (1..200);
 // description (0..5000); contactInfo (0..2000); imageUrl (HTTPS, <=2048);
-// storagePath (lost_items/{id}_{milliseconds}.jpg, <=300);
+// storagePath (cloudinary:<public_id> or legacy lost_items/{id}_{milliseconds}.jpg, <=300);
 // userName (1..200)/userEmail (email <=320), immutable poster identity;
 // isClaimed (boolean, reversible); createdAt (timestamp, immutable).
 // All fields are required. Pickup instructions and poster details on items
@@ -36,6 +36,18 @@ service cloud.firestore {
         && validString(data.name, 1, 200) && validEmail(data.email)
         && data.createdAt is timestamp;
     }
+    function isValidPhoto(data, id) {
+      return validString(data.imageUrl, 1, 2048)
+        && validString(data.storagePath, 1, 300)
+        && (
+          (data.storagePath.matches('cloudinary:[A-Za-z0-9_-]+')
+            && data.imageUrl.matches(
+              'https://res[.]cloudinary[.]com/lkualbj6/image/upload/v[0-9]+/'
+              + data.storagePath.split(':')[1] + '[.](jpg|jpeg|png|webp)'))
+          || (data.storagePath.matches('lost_items/' + id + '_[0-9]+[.]jpg')
+            && data.imageUrl.matches('https://.+'))
+        );
+    }
     function isValidItem(data, id) {
       let fields = ['id', 'title', 'location', 'description', 'contactInfo',
         'imageUrl', 'storagePath', 'userId', 'userName', 'userEmail',
@@ -47,9 +59,7 @@ service cloud.firestore {
         && validString(data.title, 1, 200) && validString(data.location, 1, 200)
         && validString(data.description, 0, 5000)
         && validString(data.contactInfo, 0, 2000)
-        && validString(data.imageUrl, 1, 2048) && data.imageUrl.matches('https://.+')
-        && validString(data.storagePath, 1, 300)
-        && data.storagePath.matches('lost_items/' + id + '_[0-9]+[.]jpg')
+        && isValidPhoto(data, id)
         && validString(data.userName, 1, 200) && validEmail(data.userEmail)
         && data.isClaimed is bool && data.createdAt is timestamp;
     }

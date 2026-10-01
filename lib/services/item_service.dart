@@ -5,43 +5,34 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/lost_item.dart';
+import 'cloudinary_service.dart';
 
 /// Service handling all CRUD operations for lost/found items:
-/// - Firebase Storage for uploading and removing item photos.
+/// - Cloudinary for new photos; Firebase Storage cleanup for legacy photos.
 /// - Cloud Firestore for saving, listening to, updating, and deleting item records.
 class ItemService {
   final FirebaseFirestore _database = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final CloudinaryService _cloudinary = CloudinaryService();
 
   CollectionReference<Map<String, dynamic>> get _itemsRef =>
       _database.collection('items');
 
-  /// Upload an image to Firebase Storage and return the download URL and storage path.
+  /// Upload a photo and return its HTTPS URL and provider-prefixed identifier.
   Future<({String imageUrl, String storagePath})> _uploadImage({
     required XFile imageFile,
     required String itemId,
-  }) async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final storagePath = 'lost_items/${itemId}_$timestamp.jpg';
-    final storageRef = _storage.ref().child(storagePath);
+  }) => _cloudinary.uploadImage(imageFile: imageFile, itemId: itemId);
 
-    final bytes = await imageFile.readAsBytes();
-    final metadata = SettableMetadata(
-      contentType: 'image/jpeg',
-      customMetadata: {'itemId': itemId},
-    );
-
-    final uploadTask = storageRef.putData(bytes, metadata);
-    final snapshot = await uploadTask;
-    final downloadUrl = await snapshot.ref.getDownloadURL();
-
-    return (imageUrl: downloadUrl, storagePath: storagePath);
-  }
-
-  /// Delete an image from Firebase Storage if it exists.
+  /// Clean up legacy photos. Cloudinary deletion requires a trusted backend.
   Future<void> _deleteStorageFile(String storagePath) async {
     if (storagePath.trim().isEmpty) return;
+    if (storagePath.startsWith('cloudinary:')) {
+      // Never embed a Cloudinary API secret in a mobile app for deletion.
+      debugPrint('Cloudinary photo retained in Media Library: $storagePath');
+      return;
+    }
     try {
       await _storage.ref(storagePath).delete();
     } catch (e) {
@@ -89,7 +80,7 @@ class ItemService {
     final newRef = _itemsRef.doc();
     final itemId = newRef.id;
 
-    // 1. Upload photo to Firebase Storage
+    // 1. Upload photo to Cloudinary
     final uploadResult = await _uploadImage(
       imageFile: imageFile,
       itemId: itemId,
@@ -191,7 +182,7 @@ class ItemService {
     await _itemsRef.doc(itemId).update({'isClaimed': !isClaimed});
   }
 
-  /// DELETE: Delete item record from Firestore and photo from Firebase Storage.
+  /// DELETE: Remove the post and clean up its photo when the provider allows it.
   Future<void> deleteItem(LostItem item) async {
     // Delete the document first so a denied write cannot remove its photo.
     await _itemsRef.doc(item.id).delete();

@@ -54,7 +54,6 @@ class DefaultFirebaseOptions {
     appId: '1:845996953960:android:6be72ae4ef72d843c306dd',
     messagingSenderId: '845996953960',
     projectId: 'mobileassigment2',
-    databaseURL: 'https://mobileassigment2-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mobileassigment2.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
@@ -62,7 +61,6 @@ class DefaultFirebaseOptions {
     appId: '1:845996953960:ios:e8ea9dcc84462429c306dd',
     messagingSenderId: '845996953960',
     projectId: 'mobileassigment2',
-    databaseURL: 'https://mobileassigment2-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mobileassigment2.firebasestorage.app',
     iosBundleId: 'com.example.asigment2',
   );

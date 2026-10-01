@@ -133,7 +133,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
     );
   }
 
-  /// Submit the post: upload photo to Firebase Storage and save to Firestore
+  /// Submit the post: upload photo to Cloudinary and save to Firestore.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -154,7 +154,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
           ? (_selectedImage != null
                 ? 'Uploading new photo...'
                 : 'Updating details...')
-          : 'Uploading photo to Firebase Storage...';
+          : 'Uploading photo...';
     });
 
     try {
@@ -175,7 +175,6 @@ class _PostItemScreenState extends State<PostItemScreen> {
           Navigator.pop(context, true);
         }
       } else {
-        setState(() => _statusMessage = 'Saving your post...');
         await _itemService.createItem(
           title: _titleController.text,
           location: _locationController.text,
@@ -224,180 +223,186 @@ class _PostItemScreenState extends State<PostItemScreen> {
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. Photo Picker Container
-                _buildPhotoPicker(context),
-                const SizedBox(height: 24),
+      body: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Photo Picker Container
+                  _buildPhotoPicker(context),
+                  const SizedBox(height: 24),
 
-                // 2. What is this item? (Title)
-                Text(
-                  'What did you find?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: colors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _titleController,
-                  enabled: !_isLoading,
-                  textCapitalization: TextCapitalization.sentences,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Blue backpack',
-                    prefixIcon: const Icon(TablerIcons.tag, size: 20),
-                    fillColor: colors.surface,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter what you found (e.g. Earbud)';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // 3. Where was it found? (Location)
-                Text(
-                  'Where was it found?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: colors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _locationController,
-                  enabled: !_isLoading,
-                  textCapitalization: TextCapitalization.sentences,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Library, 2nd floor',
-                    prefixIcon: const Icon(TablerIcons.map_pin, size: 20),
-                    fillColor: colors.surface,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter the place it was found';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // 4. Description / Details (Optional)
-                Text(
-                  'Additional Details (Optional)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: colors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _descriptionController,
-                  enabled: !_isLoading,
-                  maxLines: 3,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: 'Color, brand, or markings',
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 40),
-                      child: Icon(TablerIcons.notes, size: 20),
+                  // 2. What is this item? (Title)
+                  Text(
+                    'What did you find?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
                     ),
-                    fillColor: colors.surface,
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _titleController,
+                    enabled: !_isLoading,
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Blue backpack',
+                      prefixIcon: const Icon(TablerIcons.tag, size: 20),
+                      fillColor: colors.surface,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter what you found (e.g. Earbud)';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
 
-                // 5. Contact / Pickup instructions
-                Text(
-                  'Pickup & Contact Instructions',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: colors.onSurface,
+                  // 3. Where was it found? (Location)
+                  Text(
+                    'Where was it found?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _contactController,
-                  enabled: !_isLoading,
-                  minLines: 1,
-                  maxLines: 3,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Main security desk',
-                    prefixIcon: const Icon(TablerIcons.info_circle, size: 20),
-                    fillColor: colors.surface,
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _locationController,
+                    enabled: !_isLoading,
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Library, 2nd floor',
+                      prefixIcon: const Icon(TablerIcons.map_pin, size: 20),
+                      fillColor: colors.surface,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter the place it was found';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 20),
 
-                // Loading status indicator
-                if (_isLoading && _statusMessage != null) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                  // 4. Description / Details (Optional)
+                  Text(
+                    'Additional Details (Optional)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _descriptionController,
+                    enabled: !_isLoading,
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: 'Color, brand, or markings',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 40),
+                        child: Icon(TablerIcons.notes, size: 20),
                       ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          _statusMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: colors.onSurfaceVariant,
+                      fillColor: colors.surface,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 5. Contact / Pickup instructions
+                  Text(
+                    'Pickup & Contact Instructions',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _contactController,
+                    enabled: !_isLoading,
+                    minLines: 1,
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Main security desk',
+                      prefixIcon: const Icon(TablerIcons.info_circle, size: 20),
+                      fillColor: colors.surface,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Loading status indicator
+                  if (_isLoading && _statusMessage != null) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            _statusMessage!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colors.onSurfaceVariant,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
-                // Submit Button
-                SizedBox(
-                  height: 52,
-                  child: FilledButton.icon(
-                    onPressed: _isLoading ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.yellow,
-                      foregroundColor: AppColors.lightPrimaryText,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32),
+                  // Submit Button
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton.icon(
+                      onPressed: _isLoading ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.yellow,
+                        foregroundColor: AppColors.lightPrimaryText,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32),
+                        ),
                       ),
-                    ),
-                    icon: Icon(
-                      _isEditing ? TablerIcons.check : TablerIcons.cloud_upload,
-                      size: 20,
-                    ),
-                    label: Text(
-                      _isEditing ? 'Save Changes' : 'Post Found Item',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                      icon: Icon(
+                        _isEditing
+                            ? TablerIcons.check
+                            : TablerIcons.cloud_upload,
+                        size: 20,
+                      ),
+                      label: Text(
+                        _isEditing ? 'Save Changes' : 'Post Found Item',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         ),
@@ -440,7 +445,7 @@ class _PostItemScreenState extends State<PostItemScreen> {
                 width: double.infinity,
                 height: double.infinity,
               )
-            // If editing and has existing Firebase Storage URL
+            // If editing and has an existing photo URL
             else if (hasExistingImage)
               Image.network(
                 widget.itemToEdit!.imageUrl,

@@ -68,6 +68,25 @@ async function denyPatch(label,path,data,mask) {
   await request('owner item edit allowed','alice',':commit','POST',patch('items/item1',{title:'Blue backpack'}));
   await request('owner claim allowed','alice',':commit','POST',patch('items/item1',{isClaimed:true}));
   await request('owner unclaim allowed','alice',':commit','POST',patch('items/item1',{isClaimed:false}));
+  const cloudPhoto = {
+    imageUrl:'https://res.cloudinary.com/lkualbj6/image/upload/v123/random_id.png',
+    storagePath:'cloudinary:random_id'
+  };
+  await request('Cloudinary item creation allowed','alice',':commit','POST',create('items/cloud1',{...item,...cloudPhoto,id:'cloud1'}));
+  await request('student Cloudinary item read allowed','bob','/items/cloud1');
+  await request('legacy photo replacement with Cloudinary allowed','alice',':commit','POST',patch('items/item1',cloudPhoto));
+  await request('Cloudinary item details edit allowed','alice',':commit','POST',patch('items/cloud1',{title:'Green backpack'}));
+  await request('Cloudinary item claim allowed','alice',':commit','POST',patch('items/cloud1',{isClaimed:true}));
+  await request('Cloudinary photo replacement allowed','alice',':commit','POST',patch('items/cloud1',{
+    imageUrl:'https://res.cloudinary.com/lkualbj6/image/upload/v456/replacement.webp',storagePath:'cloudinary:replacement'
+  }));
+  await request('non-owner Cloudinary photo replacement denied','bob',':commit','POST',patch('items/cloud1',cloudPhoto),false);
+  await denyPatch('different Cloudinary account denied','items/item1',{imageUrl:'https://res.cloudinary.com/other/image/upload/v123/random_id.png'});
+  await denyPatch('Cloudinary mismatched public ID denied','items/item1',{storagePath:'cloudinary:another_id'});
+  await denyPatch('Cloudinary arbitrary URL denied','items/item1',{imageUrl:'https://example.com/random_id.png'});
+  await denyPatch('Cloudinary disguised host denied','items/item1',{imageUrl:'https://res.cloudinary.com.evil.test/lkualbj6/image/upload/v123/random_id.png'});
+  await denyPatch('Cloudinary traversal denied','items/item1',{storagePath:'cloudinary:../random_id'});
+  await denyPatch('Cloudinary unsupported format denied','items/item1',{imageUrl:'https://res.cloudinary.com/lkualbj6/image/upload/v123/random_id.svg'});
   await denyPatch('item ownership change denied','items/item1',{userId:'bob'});
   await denyPatch('item ID change denied','items/item1',{id:'item2'});
   await denyPatch('item date change denied','items/item1',{createdAt:new Date(0)});
@@ -86,5 +105,6 @@ async function denyPatch(label,path,data,mask) {
   await request('unmatched collection denied','alice','/test/test','GET',undefined,false);
   await request('non-owner item delete denied','bob','/items/item1','DELETE',undefined,false);
   await request('owner item delete allowed','alice',':commit','POST',{writes:[{delete:`projects/${project}/databases/(default)/documents/items/item1`}]});
+  await request('owner Cloudinary item delete allowed','alice',':commit','POST',{writes:[{delete:`projects/${project}/databases/(default)/documents/items/cloud1`}]});
   console.log(`${passed} Firestore rules checks passed.`);
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

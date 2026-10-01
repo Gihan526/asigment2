@@ -46,3 +46,6 @@ app.*.map.json
 
 # Kotlin compiler cache
 /android/.kotlin/
+
+# Private database exports
+/.firebase-backups/

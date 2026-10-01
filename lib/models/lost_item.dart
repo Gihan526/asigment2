@@ -26,10 +26,10 @@ class LostItem {
   /// Where the item was found (e.g. "Lecture Room 5", "Library 2nd Floor")
   final String location;
 
-  /// Download URL of the uploaded photo from Firebase Storage
+  /// HTTPS photo URL from Cloudinary or legacy Firebase Storage.
   final String imageUrl;
 
-  /// Path in Firebase Storage (e.g. "lost_items/123_abc.jpg") for file management/deletion
+  /// `cloudinary:<public_id>` for new photos, or a legacy Firebase Storage path.
   final String storagePath;
 
   /// Additional notes or details about the item

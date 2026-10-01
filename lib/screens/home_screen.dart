@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Items Realtime Stream Feed
+              // Firestore live feed
               Expanded(
                 child: StreamBuilder<List<LostItem>>(
                   stream: _itemService.getItemsStream(),
