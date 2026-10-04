@@ -178,35 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const _FieldLabel('Password'),
-                            TextButton(
-                              onPressed: () {},
-                              style: TextButton.styleFrom(
-                                foregroundColor: colors.primary,
-                                minimumSize: const Size(0, 30),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                ),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
-                              ),
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  height: 18 / 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        const _FieldLabel('Password'),
                         const SizedBox(height: 6),
                         LoginTextField(
                           controller: _passwordController,

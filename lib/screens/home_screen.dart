@@ -295,6 +295,9 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: _openPostItemScreen,
           backgroundColor: AppColors.yellow,
           foregroundColor: AppColors.lightPrimaryText,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
           icon: const Icon(TablerIcons.plus, size: 20),
           label: const Text(
             'Post Found Item',
@@ -592,13 +595,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: item.isClaimed
                           ? Colors.black.withValues(alpha: 0.75)
-                          : const Color(0xFF10B981),
+                          : const Color(0xFFFBC200),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       item.isClaimed ? 'Claimed' : 'Available',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: item.isClaimed
+                            ? Colors.white
+                            : AppColors.lightPrimaryText,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),

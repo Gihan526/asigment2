@@ -58,9 +58,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating status: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating status: $e')));
       }
     } finally {
       if (mounted) setState(() => _isActionLoading = false);
@@ -103,9 +103,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       } catch (e) {
         if (mounted) {
           setState(() => _isActionLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete item: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to delete item: $e')));
         }
       }
     }
@@ -115,9 +115,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Future<void> _editItem() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => PostItemScreen(itemToEdit: _item),
-      ),
+      MaterialPageRoute(builder: (_) => PostItemScreen(itemToEdit: _item)),
     );
 
     if (result == true && mounted) {
@@ -129,8 +127,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   String _formatDate(int timestamp) {
     final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
     final monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
@@ -165,197 +173,253 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ],
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Full Item Image
-              Hero(
-                tag: 'item-image-${_item.id}',
-                child: Container(
-                  height: 300,
-                  width: double.infinity,
-                  color: colors.surface,
-                  child: _item.imageUrl.isNotEmpty
-                      ? Image.network(
-                          _item.imageUrl,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return const Center(child: CircularProgressIndicator());
-                          },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: colors.surface,
-                            child: const Center(
-                              child: Icon(TablerIcons.photo_off, size: 48, color: Colors.grey),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          color: colors.surface,
-                          child: const Center(
-                            child: Icon(TablerIcons.photo, size: 48, color: Colors.grey),
-                          ),
-                        ),
-                ),
-              ),
-
-              // 2. Main Content Card
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Status Badge & Date
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _item.isClaimed
-                                ? Colors.grey.withValues(alpha: 0.15)
-                                : const Color(0xFF10B981).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _item.isClaimed
-                                    ? TablerIcons.circle_check
-                                    : TablerIcons.circle_dot,
-                                size: 14,
-                                color: _item.isClaimed
-                                    ? Colors.grey
-                                    : const Color(0xFF10B981),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _item.isClaimed ? 'Claimed by Owner' : 'Available',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: _item.isClaimed
-                                      ? Colors.grey
-                                      : const Color(0xFF10B981),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          _formatDate(_item.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Item Title ("What is this thing?")
-                    Text(
-                      _item.title,
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: colors.onSurface,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Location Card ("Where was it found?")
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colors.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(TablerIcons.map_pin, color: colors.primary, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'FOUND AT',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: colors.primary,
-                                    letterSpacing: 0.8,
+      body: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(overscroll: false),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Full Item Image
+                Hero(
+                  tag: 'item-image-${_item.id}',
+                  child: Container(
+                    height: 300,
+                    width: double.infinity,
+                    color: colors.surface,
+                    child: _item.imageUrl.isNotEmpty
+                        ? Image.network(
+                            _item.imageUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: colors.surface,
+                                  child: const Center(
+                                    child: Icon(
+                                      TablerIcons.photo_off,
+                                      size: 48,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                          )
+                        : Container(
+                            color: colors.surface,
+                            child: const Center(
+                              child: Icon(
+                                TablerIcons.photo,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+
+                // 2. Main Content Card
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status Badge & Date
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _item.isClaimed
+                                  ? Colors.grey.withValues(alpha: 0.15)
+                                  : const Color(0xFFFBC200),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _item.isClaimed
+                                      ? TablerIcons.circle_check
+                                      : TablerIcons.circle_dot,
+                                  size: 14,
+                                  color: _item.isClaimed
+                                      ? Colors.grey
+                                      : AppColors.lightPrimaryText,
+                                ),
+                                const SizedBox(width: 6),
                                 Text(
-                                  _item.location,
+                                  _item.isClaimed
+                                      ? 'Claimed by Owner'
+                                      : 'Available',
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: colors.onSurface,
+                                    color: _item.isClaimed
+                                        ? Colors.grey
+                                        : AppColors.lightPrimaryText,
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          Text(
+                            _formatDate(_item.createdAt),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
-                    // Description / Details (if present)
-                    if (_item.description.isNotEmpty) ...[
+                      // Item Title ("What is this thing?")
                       Text(
-                        'Details & Condition',
+                        _item.title,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
                           color: colors.onSurface,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 12),
+
+                      // Location Card ("Where was it found?")
                       Container(
-                        width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: colors.surface,
+                          color: colors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.outline),
-                        ),
-                        child: Text(
-                          _item.description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.5,
-                            color: colors.onSurface,
+                          border: Border.all(
+                            color: colors.primary.withValues(alpha: 0.2),
                           ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              TablerIcons.map_pin,
+                              color: colors.primary,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'FOUND AT',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.primary,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _item.location,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                    ],
 
-                    // Pickup / Contact instructions
-                    if (_item.contactInfo.isNotEmpty) ...[
-                      Text(
-                        'Pickup & Contact Instructions',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: colors.onSurface,
+                      // Description / Details (if present)
+                      if (_item.description.isNotEmpty) ...[
+                        Text(
+                          'Details & Condition',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colors.outline),
+                          ),
+                          child: Text(
+                            _item.description,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // Pickup / Contact instructions
+                      if (_item.contactInfo.isNotEmpty) ...[
+                        Text(
+                          'Pickup & Contact Instructions',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colors.outline),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                TablerIcons.info_circle,
+                                size: 20,
+                                color: AppColors.yellow,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _item.contactInfo,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.4,
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // Finder Info Card
                       Container(
-                        width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: colors.surface,
@@ -363,123 +427,103 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           border: Border.all(color: colors.outline),
                         ),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(TablerIcons.info_circle, size: 20, color: AppColors.yellow),
-                            const SizedBox(width: 10),
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: colors.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: Icon(
+                                TablerIcons.user,
+                                color: colors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                _item.contactInfo,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.4,
-                                  color: colors.onSurface,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Posted by',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    _item.userName,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.onSurface,
+                                    ),
+                                  ),
+                                  if (_item.userEmail.isNotEmpty)
+                                    Text(
+                                      _item.userEmail,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                    ],
+                      const SizedBox(height: 32),
 
-                    // Finder Info Card
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: colors.outline),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: colors.primary.withValues(alpha: 0.1),
-                            child: Icon(TablerIcons.user, color: colors.primary, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Posted by',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                                Text(
-                                  _item.userName,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: colors.onSurface,
-                                  ),
-                                ),
-                                if (_item.userEmail.isNotEmpty)
-                                  Text(
-                                    _item.userEmail,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colors.onSurfaceVariant,
-                                    ),
-                                  ),
-                              ],
+                      // Author Action Buttons
+                      if (_isAuthor) ...[
+                        // Mark as Claimed / Available Toggle Button
+                        SizedBox(
+                          height: 50,
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _isActionLoading ? null : _toggleClaimed,
+                            icon: Icon(
+                              _item.isClaimed
+                                  ? TablerIcons.refresh
+                                  : TablerIcons.check,
+                              size: 20,
+                            ),
+                            label: Text(
+                              _item.isClaimed
+                                  ? 'Mark as Available Again'
+                                  : 'Mark as Claimed by Owner',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                        ),
+                        const SizedBox(height: 12),
 
-                    // Author Action Buttons
-                    if (_isAuthor) ...[
-                      // Mark as Claimed / Available Toggle Button
-                      SizedBox(
-                        height: 50,
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _isActionLoading ? null : _toggleClaimed,
-                          icon: Icon(
-                            _item.isClaimed
-                                ? TablerIcons.refresh
-                                : TablerIcons.check,
-                            size: 20,
-                          ),
-                          label: Text(
-                            _item.isClaimed
-                                ? 'Mark as Available Again'
-                                : 'Mark as Claimed by Owner',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                        // Edit Post Button
+                        SizedBox(
+                          height: 50,
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _isActionLoading ? null : _editItem,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.yellow,
+                              foregroundColor: AppColors.lightPrimaryText,
+                            ),
+                            icon: const Icon(TablerIcons.edit, size: 20),
+                            label: const Text(
+                              'Edit Post Details',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Edit Post Button
-                      SizedBox(
-                        height: 50,
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _isActionLoading ? null : _editItem,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.yellow,
-                            foregroundColor: AppColors.lightPrimaryText,
-                          ),
-                          icon: const Icon(TablerIcons.edit, size: 20),
-                          label: const Text(
-                            'Edit Post Details',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
