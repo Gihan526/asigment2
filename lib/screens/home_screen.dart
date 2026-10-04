@@ -30,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final ItemService _itemService = ItemService();
+  late final Stream<List<LostItem>> _itemsStream;
 
   final TextEditingController _searchController = TextEditingController();
   ItemFilter _currentFilter = ItemFilter.all;
@@ -44,6 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Keep one subscription when search, filters, or the theme rebuild the UI.
+    _itemsStream = _itemService.getItemsStream();
     _loadUserProfile();
   }
 
@@ -367,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Firestore live feed
               Expanded(
                 child: StreamBuilder<List<LostItem>>(
-                  stream: _itemService.getItemsStream(),
+                  stream: _itemsStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -561,6 +564,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? Image.network(
                             item.imageUrl,
                             fit: BoxFit.cover,
+                            cacheWidth: (MediaQuery.sizeOf(context).width *
+                                    MediaQuery.devicePixelRatioOf(context))
+                                .round(),
                             loadingBuilder: (context, child, progress) {
                               if (progress == null) return child;
                               return Container(
