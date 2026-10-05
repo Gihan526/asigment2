@@ -30,7 +30,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final ItemService _itemService = ItemService();
-  late final Stream<List<LostItem>> _itemsStream;
+  Stream<List<LostItem>>? _cachedItemsStream;
+
+  // Initialize on first use, including states preserved during hot reload.
+  // Reuse the stream when search, filters, or the theme rebuild the UI.
+  Stream<List<LostItem>> get _itemsStream =>
+      _cachedItemsStream ??= _itemService.getItemsStream();
 
   final TextEditingController _searchController = TextEditingController();
   ItemFilter _currentFilter = ItemFilter.all;
@@ -45,8 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Keep one subscription when search, filters, or the theme rebuild the UI.
-    _itemsStream = _itemService.getItemsStream();
     _loadUserProfile();
   }
 
