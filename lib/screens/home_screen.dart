@@ -210,18 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _formatTimeAgo(int timestamp) {
-    final now = DateTime.now();
-    final itemTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    final difference = now.difference(itemTime);
-
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
-    if (difference.inHours < 24) return '${difference.inHours}h ago';
-    if (difference.inDays < 7) return '${difference.inDays}d ago';
-    return '${itemTime.day}/${itemTime.month}/${itemTime.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -545,14 +533,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      // Time ago
-                      Text(
-                        _formatTimeAgo(item.createdAt),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
