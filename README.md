@@ -8,10 +8,32 @@ The Firebase project is `mobileassigment2`. Its `(default)` Firestore database u
 
 ```sh
 flutter pub get
+# Restore your local Firebase configuration first (see below).
 flutter run
 ```
 
 Restart the app completely after changing Firebase plugins; hot reload does not load native plugin changes.
+
+## Local Firebase configuration and commit protection
+
+These generated files contain API keys and must stay local:
+
+- `lib/firebase_options.dart`
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+
+Existing local copies are preserved. For a fresh checkout, restore all three from a trusted private copy, or regenerate them with the FlutterFire CLI for project `mobileassigment2`. `lib/firebase_options.dart.example` documents the Dart configuration with placeholder keys; copying it alone does not supply working credentials or the native configuration files. Do not force-add the ignored files.
+
+Enable the repository's commit guard after cloning (requires Python 3):
+
+```sh
+git config --local core.hooksPath .githooks
+python3 tool/check_secrets.py
+```
+
+The guard checks the staged snapshot, rejects local Firebase/environment files, and detects Google API keys and private-key headers without printing their values. It is a focused check, not a comprehensive secret scanner. GitHub Actions runs the same check on pushes and pull requests.
+
+Removing files from tracking does not remove keys from earlier commits or resolve GitHub alerts. Review the exposed keys in Google Cloud Credentials; if rotation is needed, update all local configurations and verify the app before revoking old keys. Only resolve the alerts after reviewing restrictions or completing rotation. Firebase client API keys are public by design when restricted appropriately; data access must be protected by Firebase Security Rules. See [Firebase API key guidance](https://firebase.google.com/docs/projects/api-keys).
 
 ## Data and access
 
