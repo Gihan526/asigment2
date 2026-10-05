@@ -13,10 +13,8 @@ import 'item_detail_screen.dart';
 import 'login_screen.dart';
 import 'post_item_screen.dart';
 
-enum ItemFilter { all, myPosts, unclaimed }
-
 /// The primary Campus Lost & Found screen.
-/// Displays real-time feed of found items with search, filter tabs,
+/// Displays real-time feed of found items with
 /// quick item details, and button to report/post a newly found item.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.onToggleTheme});
@@ -33,13 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Stream<List<LostItem>>? _cachedItemsStream;
 
   // Initialize on first use, including states preserved during hot reload.
-  // Reuse the stream when search, filters, or the theme rebuild the UI.
+  // Reuse the stream when the theme rebuilds the UI.
   Stream<List<LostItem>> get _itemsStream =>
       _cachedItemsStream ??= _itemService.getItemsStream();
-
-  final TextEditingController _searchController = TextEditingController();
-  ItemFilter _currentFilter = ItemFilter.all;
-  String _searchQuery = '';
 
   // User Profile state
   String _name = '';
@@ -51,12 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUserProfile();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   /// Load current user profile from Cloud Firestore
@@ -311,217 +299,89 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              // Search & Filter Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Column(
-                  children: [
-                    // Search Bar
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
-                      decoration: InputDecoration(
-                        hintText: 'Search items or places (e.g. earbud, room 5)...',
-                        hintStyle: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
-                        prefixIcon: const Icon(TablerIcons.search, size: 18),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(TablerIcons.x, size: 16),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        fillColor: colors.surface,
-                      ),
+          child: StreamBuilder<List<LostItem>>(
+            stream: _itemsStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(TablerIcons.alert_circle, size: 40, color: Colors.redAccent),
+                        const SizedBox(height: 12),
+                        Text('Failed to load items: ${snapshot.error}'),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                  ),
+                );
+              }
 
-                    // Filter Chips
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip(
-                            label: 'All Items',
-                            filter: ItemFilter.all,
-                            icon: TablerIcons.layout_grid,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildFilterChip(
-                            label: 'My Posts',
-                            filter: ItemFilter.myPosts,
-                            icon: TablerIcons.user_check,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildFilterChip(
-                            label: 'Unclaimed Only',
-                            filter: ItemFilter.unclaimed,
-                            icon: TablerIcons.clock,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              final allItems = snapshot.data ?? [];
 
-              // Firestore live feed
-              Expanded(
-                child: StreamBuilder<List<LostItem>>(
-                  stream: _itemsStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(TablerIcons.alert_circle, size: 40, color: Colors.redAccent),
-                              const SizedBox(height: 12),
-                              Text('Failed to load items: ${snapshot.error}'),
-                            ],
+              // Empty State
+              if (allItems.isEmpty) {
+                return Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            TablerIcons.box_off,
+                            size: 40,
+                            color: colors.primary,
                           ),
                         ),
-                      );
-                    }
-
-                    final allItems = snapshot.data ?? [];
-
-                    // Apply active filters
-                    final filteredItems = allItems.where((item) {
-                      // Filter by user selection
-                      if (_currentFilter == ItemFilter.myPosts && item.userId != _uid) {
-                        return false;
-                      }
-                      if (_currentFilter == ItemFilter.unclaimed && item.isClaimed) {
-                        return false;
-                      }
-
-                      // Filter by search query (title or location)
-                      if (_searchQuery.isNotEmpty) {
-                        final titleMatch = item.title.toLowerCase().contains(_searchQuery);
-                        final locationMatch = item.location.toLowerCase().contains(_searchQuery);
-                        final descMatch = item.description.toLowerCase().contains(_searchQuery);
-                        if (!titleMatch && !locationMatch && !descMatch) return false;
-                      }
-
-                      return true;
-                    }).toList();
-
-                    // Empty State
-                    if (filteredItems.isEmpty) {
-                      return Center(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(32),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: colors.primary.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  _searchQuery.isNotEmpty
-                                      ? TablerIcons.zoom_question
-                                      : TablerIcons.box_off,
-                                  size: 40,
-                                  color: colors.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _searchQuery.isNotEmpty
-                                    ? 'No items match your search'
-                                    : _currentFilter == ItemFilter.myPosts
-                                        ? "You haven't posted any items yet"
-                                        : 'No found items reported yet',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _searchQuery.isNotEmpty
-                                    ? 'Try checking for typos or searching by room name'
-                                    : 'Found something on campus? Post it to help the owner.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        Text(
+                          'No found items reported yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
                           ),
                         ),
-                      );
-                    }
+                        const SizedBox(height: 6),
+                        Text(
+                          'Found something on campus? Post it to help the owner.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
-                    // List of items
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                      itemCount: filteredItems.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final item = filteredItems[index];
-                        return _buildItemCard(context, item);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+              // List of items
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                itemCount: allItems.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 14),
+                itemBuilder: (context, index) {
+                  final item = allItems[index];
+                  return _buildItemCard(context, item);
+                },
+              );
+            },
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required String label,
-    required ItemFilter filter,
-    required IconData icon,
-  }) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final isSelected = _currentFilter == filter;
-
-    return ChoiceChip(
-      showCheckmark: false,
-      avatar: Icon(
-        icon,
-        size: 15,
-        color: isSelected ? Colors.white : colors.onSurfaceVariant,
-      ),
-      label: Text(label),
-      selected: isSelected,
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? Colors.white : colors.onSurface,
-      ),
-      selectedColor: colors.primary,
-      backgroundColor: colors.surface,
-      side: BorderSide(
-        color: isSelected ? colors.primary : colors.outline,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      onSelected: (selected) {
-        if (selected) setState(() => _currentFilter = filter);
-      },
     );
   }
 
