@@ -71,6 +71,8 @@ class LostItem {
 
   /// Create a LostItem instance from a Firestore Map
   factory LostItem.fromMap(String id, Map<dynamic, dynamic> map) {
+    final createdAt = map['createdAt'];
+
     return LostItem(
       id: id,
       title: (map['title'] as String?) ?? '',
@@ -83,13 +85,9 @@ class LostItem {
       userName: (map['userName'] as String?) ?? 'Anonymous Student',
       userEmail: (map['userEmail'] as String?) ?? '',
       isClaimed: (map['isClaimed'] as bool?) ?? false,
-      createdAt: (map['createdAt'] is Timestamp)
-          ? (map['createdAt'] as Timestamp).millisecondsSinceEpoch
-          : (map['createdAt'] is int)
-          ? map['createdAt'] as int
-          : (map['createdAt'] is num)
-          ? (map['createdAt'] as num).toInt()
-          : DateTime.now().millisecondsSinceEpoch,
+      createdAt: createdAt is Timestamp
+          ? createdAt.millisecondsSinceEpoch
+          : (createdAt as int?) ?? DateTime.now().millisecondsSinceEpoch,
     );
   }
 
